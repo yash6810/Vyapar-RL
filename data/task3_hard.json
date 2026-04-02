@@ -1,0 +1,111 @@
+[
+  {
+    "episode_id": "t3_ep1",
+    "gstr1": [
+      {"invoice_no": "INV-001", "gstin": "27AAPCA1234A1Z5", "taxable_value": 50000, "gst_rate": 18, "tax_amount": 9000},
+      {"invoice_no": "INV-002", "gstin": "27AAPCA1234A1Z5", "taxable_value": 30000, "gst_rate": 12, "tax_amount": 3600},
+      {"invoice_no": "INV-003", "gstin": "29AABCB2345B2Z4", "taxable_value": 80000, "gst_rate": 18, "tax_amount": 14400},
+      {"invoice_no": "INV-004", "gstin": "07AACCD3456C3Z3", "taxable_value": 25000, "gst_rate": 18, "tax_amount": 4500}
+    ],
+    "gstr2a": [
+      {"invoice_no": "INV-001", "gstin": "27AAPCA1234A1Z5", "taxable_value": 50000, "gst_rate": 18, "tax_amount": 9000},
+      {"invoice_no": "INV-002", "gstin": "27AAPCA1234A1Z5", "taxable_value": 25000, "gst_rate": 12, "tax_amount": 3000},
+      {"invoice_no": "INV-005", "gstin": "07AACCD3456C3Z3", "taxable_value": 15000, "gst_rate": 18, "tax_amount": 2700}
+    ],
+    "golden_answer": {
+      "mismatches": [
+        {"invoice_no": "INV-002", "mismatch_type": "amount_mismatch",     "gstr1_tax_amount": 3600,  "gstr2a_tax_amount": 3000, "itc_at_risk": 600},
+        {"invoice_no": "INV-003", "mismatch_type": "missing_in_gstr2a",   "gstr1_tax_amount": 14400, "gstr2a_tax_amount": 0,    "itc_at_risk": 14400},
+        {"invoice_no": "INV-004", "mismatch_type": "missing_in_gstr2a",   "gstr1_tax_amount": 4500,  "gstr2a_tax_amount": 0,    "itc_at_risk": 4500},
+        {"invoice_no": "INV-005", "mismatch_type": "extra_in_gstr2a",     "gstr1_tax_amount": 0,     "gstr2a_tax_amount": 2700, "itc_at_risk": 2700}
+      ],
+      "total_itc_at_risk": 22200,
+      "total_matched_invoices": 1
+    }
+  },
+  {
+    "episode_id": "t3_ep2",
+    "gstr1": [
+      {"invoice_no": "INV-A01", "gstin": "29AAAFG5678D4Z1", "taxable_value": 120000, "gst_rate": 18, "tax_amount": 21600},
+      {"invoice_no": "INV-A02", "gstin": "29AAAFG5678D4Z1", "taxable_value": 45000,  "gst_rate": 12, "tax_amount": 5400},
+      {"invoice_no": "INV-A03", "gstin": "33AABHI7890E5Z2", "taxable_value": 60000,  "gst_rate": 18, "tax_amount": 10800}
+    ],
+    "gstr2a": [
+      {"invoice_no": "INV-A01", "gstin": "29AAAFG5678D4Z1", "taxable_value": 120000, "gst_rate": 18, "tax_amount": 21600},
+      {"invoice_no": "INV-A02", "gstin": "29AAAFG5678D4Z1", "taxable_value": 45000,  "gst_rate": 12, "tax_amount": 5400},
+      {"invoice_no": "INV-A04", "gstin": "33AABHI7890E5Z2", "taxable_value": 30000,  "gst_rate": 18, "tax_amount": 5400}
+    ],
+    "golden_answer": {
+      "mismatches": [
+        {"invoice_no": "INV-A03", "mismatch_type": "missing_in_gstr2a", "gstr1_tax_amount": 10800, "gstr2a_tax_amount": 0,    "itc_at_risk": 10800},
+        {"invoice_no": "INV-A04", "mismatch_type": "extra_in_gstr2a",   "gstr1_tax_amount": 0,     "gstr2a_tax_amount": 5400, "itc_at_risk": 5400}
+      ],
+      "total_itc_at_risk": 16200,
+      "total_matched_invoices": 2
+    }
+  },
+  {
+    "episode_id": "t3_ep3",
+    "gstr1": [
+      {"invoice_no": "B001", "gstin": "24AACJK9012F6Z8", "taxable_value": 200000, "gst_rate": 18, "tax_amount": 36000},
+      {"invoice_no": "B002", "gstin": "24AACJK9012F6Z8", "taxable_value": 50000,  "gst_rate": 18, "tax_amount": 9000},
+      {"invoice_no": "B003", "gstin": "36AADLM1234G7Z9", "taxable_value": 75000,  "gst_rate": 12, "tax_amount": 9000},
+      {"invoice_no": "B004", "gstin": "36AADLM1234G7Z9", "taxable_value": 40000,  "gst_rate": 18, "tax_amount": 7200}
+    ],
+    "gstr2a": [
+      {"invoice_no": "B001", "gstin": "24AACJK9012F6Z8", "taxable_value": 200000, "gst_rate": 18, "tax_amount": 36000},
+      {"invoice_no": "B002", "gstin": "24AACJK9012F6Z8", "taxable_value": 50000,  "gst_rate": 18, "tax_amount": 4500},
+      {"invoice_no": "B003", "gstin": "36AADLM1234G7Z9", "taxable_value": 75000,  "gst_rate": 12, "tax_amount": 9000},
+      {"invoice_no": "B004", "gstin": "36AADLM1234G7Z9", "taxable_value": 40000,  "gst_rate": 18, "tax_amount": 7200}
+    ],
+    "golden_answer": {
+      "mismatches": [
+        {"invoice_no": "B002", "mismatch_type": "amount_mismatch", "gstr1_tax_amount": 9000, "gstr2a_tax_amount": 4500, "itc_at_risk": 4500}
+      ],
+      "total_itc_at_risk": 4500,
+      "total_matched_invoices": 3
+    }
+  },
+  {
+    "episode_id": "t3_ep4",
+    "gstr1": [
+      {"invoice_no": "C101", "gstin": "06AAENP3456H8Z5", "taxable_value": 90000,  "gst_rate": 18, "tax_amount": 16200},
+      {"invoice_no": "C102", "gstin": "06AAENP3456H8Z5", "taxable_value": 35000,  "gst_rate": 18, "tax_amount": 6300},
+      {"invoice_no": "C103", "gstin": "19AAFQR5678I9Z6", "taxable_value": 110000, "gst_rate": 18, "tax_amount": 19800}
+    ],
+    "gstr2a": [
+      {"invoice_no": "C101", "gstin": "06AAENP3456H8Z5", "taxable_value": 90000,  "gst_rate": 18, "tax_amount": 16200},
+      {"invoice_no": "C102", "gstin": "06AAENP3456H8Z5", "taxable_value": 35000,  "gst_rate": 18, "tax_amount": 6300},
+      {"invoice_no": "C103", "gstin": "19AAFQR5678I9Z6", "taxable_value": 110000, "gst_rate": 18, "tax_amount": 15000}
+    ],
+    "golden_answer": {
+      "mismatches": [
+        {"invoice_no": "C103", "mismatch_type": "amount_mismatch", "gstr1_tax_amount": 19800, "gstr2a_tax_amount": 15000, "itc_at_risk": 4800}
+      ],
+      "total_itc_at_risk": 4800,
+      "total_matched_invoices": 2
+    }
+  },
+  {
+    "episode_id": "t3_ep5",
+    "gstr1": [
+      {"invoice_no": "D201", "gstin": "27AAGST9999Z1Z1", "taxable_value": 500000, "gst_rate": 18, "tax_amount": 90000},
+      {"invoice_no": "D202", "gstin": "27AAGST9999Z1Z1", "taxable_value": 100000, "gst_rate": 12, "tax_amount": 12000},
+      {"invoice_no": "D203", "gstin": "29AAHST8888Z2Z2", "taxable_value": 250000, "gst_rate": 18, "tax_amount": 45000},
+      {"invoice_no": "D204", "gstin": "29AAHST8888Z2Z2", "taxable_value": 80000,  "gst_rate": 18, "tax_amount": 14400}
+    ],
+    "gstr2a": [
+      {"invoice_no": "D201", "gstin": "27AAGST9999Z1Z1", "taxable_value": 500000, "gst_rate": 18, "tax_amount": 90000},
+      {"invoice_no": "D202", "gstin": "27AAGST9999Z1Z1", "taxable_value": 100000, "gst_rate": 12, "tax_amount": 12000},
+      {"invoice_no": "D203", "gstin": "29AAHST8888Z2Z2", "taxable_value": 200000, "gst_rate": 18, "tax_amount": 36000}
+    ],
+    "golden_answer": {
+      "mismatches": [
+        {"invoice_no": "D203", "mismatch_type": "amount_mismatch",   "gstr1_tax_amount": 45000, "gstr2a_tax_amount": 36000, "itc_at_risk": 9000},
+        {"invoice_no": "D204", "mismatch_type": "missing_in_gstr2a", "gstr1_tax_amount": 14400, "gstr2a_tax_amount": 0,     "itc_at_risk": 14400}
+      ],
+      "total_itc_at_risk": 23400,
+      "total_matched_invoices": 2
+    }
+  }
+]

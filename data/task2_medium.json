@@ -1,0 +1,109 @@
+[
+  {
+    "episode_id": "t2_ep1",
+    "quarter": "Q3-2025",
+    "business_type": "intrastate",
+    "transactions": [
+      {"id": 1, "type": "sale",     "description": "IT consulting",       "taxable_value": 100000, "gst_slab": 18},
+      {"id": 2, "type": "sale",     "description": "Software license",    "taxable_value": 50000,  "gst_slab": 18},
+      {"id": 3, "type": "sale",     "description": "Training services",   "taxable_value": 30000,  "gst_slab": 18},
+      {"id": 4, "type": "purchase", "description": "Office supplies",     "taxable_value": 10000,  "gst_slab": 18},
+      {"id": 5, "type": "purchase", "description": "Cloud hosting AWS",   "taxable_value": 15000,  "gst_slab": 18},
+      {"id": 6, "type": "purchase", "description": "Laptop purchase",     "taxable_value": 65000,  "gst_slab": 12}
+    ],
+    "golden_answer": {
+      "total_sales_value":    180000,
+      "total_purchase_value": 90000,
+      "cgst_payable":         16200,
+      "sgst_payable":         16200,
+      "igst_payable":         0,
+      "total_itc":            6690,
+      "net_gst_liability":    25710
+    }
+  },
+  {
+    "episode_id": "t2_ep2",
+    "quarter": "Q4-2025",
+    "business_type": "interstate",
+    "transactions": [
+      {"id": 1, "type": "sale",     "description": "SaaS subscription",   "taxable_value": 200000, "gst_slab": 18},
+      {"id": 2, "type": "sale",     "description": "API services",        "taxable_value": 80000,  "gst_slab": 18},
+      {"id": 3, "type": "purchase", "description": "Server equipment",    "taxable_value": 120000, "gst_slab": 18},
+      {"id": 4, "type": "purchase", "description": "Internet bandwidth",  "taxable_value": 20000,  "gst_slab": 18},
+      {"id": 5, "type": "purchase", "description": "Packaged food",       "taxable_value": 5000,   "gst_slab": 5}
+    ],
+    "golden_answer": {
+      "total_sales_value":    280000,
+      "total_purchase_value": 145000,
+      "cgst_payable":         0,
+      "sgst_payable":         0,
+      "igst_payable":         50400,
+      "total_itc":            21850,
+      "net_gst_liability":    28550
+    }
+  },
+  {
+    "episode_id": "t2_ep3",
+    "quarter": "Q1-2026",
+    "business_type": "intrastate",
+    "transactions": [
+      {"id": 1, "type": "sale",     "description": "Consulting project",  "taxable_value": 75000,  "gst_slab": 18},
+      {"id": 2, "type": "sale",     "description": "Product sales",       "taxable_value": 45000,  "gst_slab": 12},
+      {"id": 3, "type": "sale",     "description": "Service contract",    "taxable_value": 60000,  "gst_slab": 18},
+      {"id": 4, "type": "purchase", "description": "Raw materials",       "taxable_value": 30000,  "gst_slab": 18},
+      {"id": 5, "type": "purchase", "description": "Transport services",  "taxable_value": 8000,   "gst_slab": 5},
+      {"id": 6, "type": "purchase", "description": "Software tools",      "taxable_value": 25000,  "gst_slab": 18}
+    ],
+    "golden_answer": {
+      "total_sales_value":    180000,
+      "total_purchase_value": 63000,
+      "cgst_payable":         12150,
+      "sgst_payable":         12150,
+      "igst_payable":         0,
+      "total_itc":            5100,
+      "net_gst_liability":    19200
+    }
+  },
+  {
+    "episode_id": "t2_ep4",
+    "quarter": "Q2-2025",
+    "business_type": "intrastate",
+    "transactions": [
+      {"id": 1, "type": "sale",     "description": "Web development",     "taxable_value": 120000, "gst_slab": 18},
+      {"id": 2, "type": "sale",     "description": "Mobile app project",  "taxable_value": 90000,  "gst_slab": 18},
+      {"id": 3, "type": "purchase", "description": "Developer tools",     "taxable_value": 18000,  "gst_slab": 18},
+      {"id": 4, "type": "purchase", "description": "Office furniture",    "taxable_value": 40000,  "gst_slab": 18},
+      {"id": 5, "type": "purchase", "description": "Tea and snacks",      "taxable_value": 3000,   "gst_slab": 5}
+    ],
+    "golden_answer": {
+      "total_sales_value":    210000,
+      "total_purchase_value": 61000,
+      "cgst_payable":         18900,
+      "sgst_payable":         18900,
+      "igst_payable":         0,
+      "total_itc":            3375,
+      "net_gst_liability":    34425
+    }
+  },
+  {
+    "episode_id": "t2_ep5",
+    "quarter": "Q3-2025",
+    "business_type": "interstate",
+    "transactions": [
+      {"id": 1, "type": "sale",     "description": "Data analytics",      "taxable_value": 150000, "gst_slab": 18},
+      {"id": 2, "type": "sale",     "description": "Training workshop",   "taxable_value": 40000,  "gst_slab": 18},
+      {"id": 3, "type": "purchase", "description": "Cloud services",      "taxable_value": 35000,  "gst_slab": 18},
+      {"id": 4, "type": "purchase", "description": "Laptop accessories",  "taxable_value": 12000,  "gst_slab": 12},
+      {"id": 5, "type": "purchase", "description": "Packaged food office","taxable_value": 4000,   "gst_slab": 5}
+    ],
+    "golden_answer": {
+      "total_sales_value":    190000,
+      "total_purchase_value": 51000,
+      "cgst_payable":         0,
+      "sgst_payable":         0,
+      "igst_payable":         34200,
+      "total_itc":            7640,
+      "net_gst_liability":    26560
+    }
+  }
+]

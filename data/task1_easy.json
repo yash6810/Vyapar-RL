@@ -1,0 +1,102 @@
+[
+  {
+    "episode_id": "t1_ep1",
+    "transactions": [
+      {"id": 1, "description": "Zomato food delivery charges", "amount": 450.00},
+      {"id": 2, "description": "AWS cloud services monthly", "amount": 12000.00},
+      {"id": 3, "description": "Office stationery purchase", "amount": 2500.00},
+      {"id": 4, "description": "Fresh vegetables from market", "amount": 800.00},
+      {"id": 5, "description": "Mobile phone under 12000", "amount": 8999.00},
+      {"id": 6, "description": "Cigarettes purchase", "amount": 300.00},
+      {"id": 7, "description": "Internet broadband bill", "amount": 1500.00},
+      {"id": 8, "description": "Tea and coffee packets", "amount": 600.00},
+      {"id": 9, "description": "IT consulting services", "amount": 50000.00},
+      {"id": 10, "description": "Cement bags purchase", "amount": 15000.00}
+    ],
+    "golden_answer": {
+      "1": 18, "2": 18, "3": 18, "4": 0,
+      "5": 12, "6": 28, "7": 18, "8": 5,
+      "9": 18, "10": 28
+    }
+  },
+  {
+    "episode_id": "t1_ep2",
+    "transactions": [
+      {"id": 1, "description": "Hospital treatment fees", "amount": 5000.00},
+      {"id": 2, "description": "Luxury hotel stay above 7500/night", "amount": 25000.00},
+      {"id": 3, "description": "Packaged biscuits and snacks", "amount": 1200.00},
+      {"id": 4, "description": "Software license SaaS annual", "amount": 36000.00},
+      {"id": 5, "description": "Fertilizer for farm", "amount": 4500.00},
+      {"id": 6, "description": "Pepsi aerated drinks bulk", "amount": 2000.00},
+      {"id": 7, "description": "Uber cab rides monthly", "amount": 3500.00},
+      {"id": 8, "description": "Laptop purchase for office", "amount": 65000.00},
+      {"id": 9, "description": "Insurance premium payment", "amount": 12000.00},
+      {"id": 10, "description": "Newspaper subscription", "amount": 300.00}
+    ],
+    "golden_answer": {
+      "1": 0, "2": 28, "3": 5, "4": 18,
+      "5": 5, "6": 28, "7": 18, "8": 12,
+      "9": 18, "10": 0
+    }
+  },
+  {
+    "episode_id": "t1_ep3",
+    "transactions": [
+      {"id": 1, "description": "Google Cloud Platform compute", "amount": 8000.00},
+      {"id": 2, "description": "Rice and wheat purchase", "amount": 5000.00},
+      {"id": 3, "description": "Paint for office renovation", "amount": 12000.00},
+      {"id": 4, "description": "Telecom mobile bill", "amount": 2000.00},
+      {"id": 5, "description": "Frozen chicken meat", "amount": 3000.00},
+      {"id": 6, "description": "Education course fees", "amount": 15000.00},
+      {"id": 7, "description": "Washing machine purchase", "amount": 35000.00},
+      {"id": 8, "description": "Rail ticket booking", "amount": 2500.00},
+      {"id": 9, "description": "Tobacco products purchase", "amount": 1800.00},
+      {"id": 10, "description": "Professional accounting services", "amount": 20000.00}
+    ],
+    "golden_answer": {
+      "1": 18, "2": 0, "3": 28, "4": 18,
+      "5": 12, "6": 0, "7": 18, "8": 5,
+      "9": 28, "10": 18
+    }
+  },
+  {
+    "episode_id": "t1_ep4",
+    "transactions": [
+      {"id": 1, "description": "Swiggy food delivery fees", "amount": 750.00},
+      {"id": 2, "description": "Medical books for doctors", "amount": 2200.00},
+      {"id": 3, "description": "Cement and construction material", "amount": 45000.00},
+      {"id": 4, "description": "Azure cloud subscription", "amount": 18000.00},
+      {"id": 5, "description": "Packaged tea bags", "amount": 900.00},
+      {"id": 6, "description": "Luxury car maintenance", "amount": 35000.00},
+      {"id": 7, "description": "Broadband internet service", "amount": 1200.00},
+      {"id": 8, "description": "Processed food items", "amount": 4500.00},
+      {"id": 9, "description": "Ola cab rides", "amount": 2800.00},
+      {"id": 10, "description": "Fresh milk daily supply", "amount": 1500.00}
+    ],
+    "golden_answer": {
+      "1": 18, "2": 0, "3": 28, "4": 18,
+      "5": 5, "6": 28, "7": 18, "8": 12,
+      "9": 18, "10": 0
+    }
+  },
+  {
+    "episode_id": "t1_ep5",
+    "transactions": [
+      {"id": 1, "description": "IT software development services", "amount": 80000.00},
+      {"id": 2, "description": "Spices and masala packets", "amount": 2000.00},
+      {"id": 3, "description": "Television purchase 55 inch", "amount": 55000.00},
+      {"id": 4, "description": "Healthcare hospital services", "amount": 8000.00},
+      {"id": 5, "description": "Aerated cold drinks bulk order", "amount": 6000.00},
+      {"id": 6, "description": "Financial consulting advisory", "amount": 25000.00},
+      {"id": 7, "description": "Printer for office", "amount": 18000.00},
+      {"id": 8, "description": "Agricultural equipment", "amount": 12000.00},
+      {"id": 9, "description": "Casino gaming credits", "amount": 10000.00},
+      {"id": 10, "description": "Restaurant AC meal business", "amount": 3500.00}
+    ],
+    "golden_answer": {
+      "1": 18, "2": 5, "3": 18, "4": 0,
+      "5": 28, "6": 18, "7": 12, "8": 0,
+      "9": 28, "10": 18
+    }
+  }
+]
