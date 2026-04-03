@@ -1,3 +1,11 @@
+---
+title: Vyapar RL
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
 # Vyapar-RL
 
 **An OpenEnv reinforcement learning environment for Indian GST compliance.**
