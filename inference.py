@@ -1,11 +1,11 @@
 """
-inference.py — Baseline inference script for vyapar-gst-env.
+inference.py — Baseline inference script for Vyapar-RL.
 MUST be in root directory. MUST be named exactly inference.py.
 Uses OpenAI client library pointed at HuggingFace Router.
 Runtime: < 20 minutes on 2 vCPU / 8GB RAM (no GPU needed).
 
 STDOUT FORMAT (mandatory):
-  [START] task=<task_name> env=vyapar-gst-env model=<model_name>
+  [START] task=<task_name> env=Vyapar-RL model=<model_name>
   [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
   [END]   success=<true|false> steps=<n> score=<float> rewards=<r1,r2,...,rn>
 """
@@ -24,7 +24,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "")
 MODEL_NAME   = os.getenv("MODEL_NAME", "meta-llama/Llama-3.1-8B-Instruct")
 ENV_URL      = os.getenv("ENV_URL", "http://localhost:8000")
-BENCHMARK    = "vyapar-gst-env"
+BENCHMARK    = "Vyapar-RL"
 SUCCESS_SCORE_THRESHOLD = 0.3
 
 if not API_KEY:

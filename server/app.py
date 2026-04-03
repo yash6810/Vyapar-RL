@@ -7,4 +7,4 @@ from models import GSTAction, GSTObservation
 from server.environment import GSTEnvironment
 
 app = create_app(GSTEnvironment, GSTAction, GSTObservation,
-                 env_name="vyapar-gst-env")
+                 env_name="Vyapar-RL")

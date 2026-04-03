@@ -1,4 +1,4 @@
-# vyapar-gst-env
+# Vyapar-RL
 
 **An OpenEnv reinforcement learning environment for Indian GST compliance.**
 
@@ -84,8 +84,8 @@ class GSTObservation(Observation):
 pip install openenv-core
 
 # Clone and install
-git clone https://github.com/yash6810/vyapar-gst-env
-cd vyapar-gst-env
+git clone https://github.com/yash6810/Vyapar-RL
+cd Vyapar-RL
 pip install -e .
 
 # Run server
@@ -113,15 +113,15 @@ with GSTEnvClient(base_url='http://localhost:8000').sync() as env:
 export HF_TOKEN=your_huggingface_token
 export MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct
 export API_BASE_URL=https://router.huggingface.co/v1
-export ENV_URL=https://yash6810-vyapar-gst-env.hf.space
+export ENV_URL=https://yash6810-Vyapar-RL.hf.space
 
 python inference.py
 ```
 
 ### Docker
 ```bash
-docker build -t vyapar-gst-env .
-docker run -p 8000:8000 vyapar-gst-env
+docker build -t vyapar-rl .
+docker run -p 8000:8000 vyapar-rl
 ```
 
 ---

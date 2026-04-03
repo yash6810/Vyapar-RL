@@ -1,5 +1,5 @@
 """
-models.py — Pydantic Action, Observation, and State models for vyapar-gst-env.
+models.py — Pydantic Action, Observation, and State models for Vyapar-RL.
 """
 from typing import Any, Dict, List, Optional
 from openenv.core.env_server.types import Action, Observation, State

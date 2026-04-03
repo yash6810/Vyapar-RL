@@ -1,5 +1,5 @@
 [project]
-name = "vyapar-gst-env"
+name = "Vyapar-RL"
 version = "0.1.0"
 description = "OpenEnv environment for Indian GST compliance — derived from the Vyapar SME assistant."
 readme = "README.md"
