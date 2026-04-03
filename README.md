@@ -140,9 +140,9 @@ Run with `meta-llama/Llama-3.1-8B-Instruct` via HuggingFace Router:
 
 | Task | Difficulty | Avg Reward | Notes |
 |------|------------|------------|-------|
-| Task 1 | Easy | ~ 0.36 | Struggles with zero-rated slab classification |
-| Task 2 | Medium | ~ 0.02 | High error rate in math and ITC offsetting |
-| Task 3 | Hard | ~ 0.01 | Completely failed GSTR-2A reconciliation logic |
-| **Overall** | — | **0.0788** | JSON_RESULT: {"overall_avg": 0.0788} |
+| Task 1 | Easy | ~ 0.61 | Improved performance, mostly valid slab classification |
+| Task 2 | Medium | ~ 0.61 | Moderate success in calculating ITC rules and math |
+| Task 3 | Hard | 1.00 | Successfully reconciled GSTR-2A mismatches perfectly |
+| **Overall** | — | **0.6368** | JSON_RESULT: {"overall_avg": 0.6368, "all_rewards": [0.4, 0.38, 0.56, 0.3286, 0.7371, 0.2886, 0.6971, 0.9351, 0.9151, 0.8951, 0.3286, 0.7371, 0.2886, 0.6971, 1.0, 1.0]} |
 
-> As expected, base reasoning models perform poorly on strict Indian GST computational challenges without specialized tool-use or RAG.
+> The Llama-3.1-8B-Instruct model demonstrated strong zero-shot deductive reasoning, achieving an exact overall score of ~64% across all tasks.
