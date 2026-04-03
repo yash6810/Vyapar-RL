@@ -22,7 +22,7 @@ load_dotenv()
 # ─── Configuration ────────────────────────────────────────────────────────────
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "")
-MODEL_NAME   = os.getenv("MODEL_NAME", "meta-llama/Llama-3.1-8B-Instruct")
+MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
 ENV_URL      = os.getenv("ENV_URL", "http://localhost:8000")
 BENCHMARK    = "Vyapar-RL"
 SUCCESS_SCORE_THRESHOLD = 0.3
@@ -136,6 +136,7 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
             try:
                 answer = call_llm(prompt)
             except Exception as e:
+                print(f"API ERROR: {e}")
                 answer = "{}"
 
             # GenericEnvClient sends actions as dicts

@@ -119,7 +119,7 @@ with GSTEnvClient(base_url='http://localhost:8000').sync() as env:
 ### Run baseline inference
 ```bash
 export HF_TOKEN=your_huggingface_token
-export MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct
+export MODEL_NAME=Qwen/Qwen2.5-7B-Instruct
 export API_BASE_URL=https://router.huggingface.co/v1
 export ENV_URL=https://yash6810-Vyapar-RL.hf.space
 
@@ -136,13 +136,13 @@ docker run -p 8000:8000 vyapar-rl
 
 ## 6. Baseline Scores
 
-Run with `meta-llama/Llama-3.1-8B-Instruct` via HuggingFace Router:
+Run with `Qwen/Qwen2.5-7B-Instruct` via HuggingFace Router:
 
 | Task | Difficulty | Avg Reward | Notes |
 |------|------------|------------|-------|
-| Task 1 | Easy | ~ 0.61 | Improved performance, mostly valid slab classification |
-| Task 2 | Medium | ~ 0.61 | Moderate success in calculating ITC rules and math |
-| Task 3 | Hard | 1.00 | Successfully reconciled GSTR-2A mismatches perfectly |
-| **Overall** | — | **0.6368** | JSON_RESULT: {"overall_avg": 0.6368, "all_rewards": [0.4, 0.38, 0.56, 0.3286, 0.7371, 0.2886, 0.6971, 0.9351, 0.9151, 0.8951, 0.3286, 0.7371, 0.2886, 0.6971, 1.0, 1.0]} |
+| Task 1 | Easy | ~ 0.64 | Fast parsing, valid deduction of standard slab rates |
+| Task 2 | Medium | ~ 0.71 | High capability in mathematical reduction |
+| Task 3 | Hard | ~ 0.84 | Easily detects deep mismatches across varying invoice schema |
+| **Overall** | — | **0.6966** | JSON_RESULT: {"overall_avg": 0.6966, "all_rewards": [0.8, 0.88, 0.76, 0.3714, 0.4514, 0.3886, 0.5114, 1.0, 0.5143, 0.88, 0.3886, 0.84, 0.7, 0.98, 0.7, 0.98]} |
 
-> The Llama-3.1-8B-Instruct model demonstrated strong zero-shot deductive reasoning, achieving an exact overall score of ~64% across all tasks.
+> The Qwen/Qwen2.5-7B-Instruct model demonstrated strong zero-shot deductive reasoning, achieving an exact overall score of ~69.6% across all tasks.
