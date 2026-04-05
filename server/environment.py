@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from openenv.core.env_server.types import Environment
+from openenv.core.env_server.http_server import Environment
 
 from models import GSTAction, GSTObservation, GSTState
 from server.graders import grade_task1, grade_task2, grade_task3, compute_reward
