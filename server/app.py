@@ -10,8 +10,7 @@ from openenv.core.env_server import create_fastapi_app
 from models import GSTAction, GSTObservation
 from server.environment import GSTEnvironment
 
-env = GSTEnvironment()
-app = create_fastapi_app(env, GSTAction, GSTObservation)
+app = create_fastapi_app(GSTEnvironment, GSTAction, GSTObservation)
 
 def main():
     uvicorn.run(app, host="0.0.0.0", port=7860)
