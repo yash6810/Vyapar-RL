@@ -1,17 +1,20 @@
 """
-server/app.py — FastAPI app using OpenEnv's create_app helper.
+server/app.py — FastAPI app for Vyapar-RL OpenEnv environment.
 """
+import sys
+import os
 import uvicorn
-from openenv.core.env_server.http_server import create_app
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from openenv.core.env_server import create_fastapi_app
 from models import GSTAction, GSTObservation
 from server.environment import GSTEnvironment
 
-app = create_app(GSTEnvironment, GSTAction, GSTObservation,
-                 env_name="Vyapar-RL")
+env = GSTEnvironment()
+app = create_fastapi_app(env, GSTAction, GSTObservation)
 
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=7860)
 
 if __name__ == '__main__':
     main()

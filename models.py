@@ -2,7 +2,7 @@
 models.py — Pydantic Action, Observation, and State models for Vyapar-RL.
 """
 from typing import Any, Dict, List, Optional
-from openenv.core.env_server.types import Action, Observation, State
+from openenv.core.env_server import Action, Observation, State
 
 
 class GSTAction(Action):
