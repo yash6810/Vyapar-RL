@@ -12,7 +12,8 @@ STDOUT FORMAT (mandatory):
 import json
 import os
 import sys
-from typing import List, Optional
+import re
+from typing import List, Optional, Dict
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -40,8 +41,7 @@ SYSTEM_PROMPT = """You are an expert Indian GST compliance assistant with deep k
 - Quarterly GST liability computation (CGST, SGST, IGST, ITC)
 - GSTR-1 vs GSTR-2A reconciliation and mismatch detection
 
-You will receive a task description and must respond with ONLY a valid JSON object.
-No explanation, no markdown, no code blocks — just the raw JSON.
+Before answering, write a <thought>...</thought> block analyzing the mathematical operations required. Then, output your final answer as ONLY a valid JSON object.
 Be precise with numbers. Indian tax laws are strict about accuracy."""
 
 
@@ -68,18 +68,19 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
 
 
 # ─── LLM helpers ─────────────────────────────────────────────────────────────
-def call_llm(user_message: str) -> str:
-    """Call the LLM and return its response text."""
+def call_llm(messages: List[Dict[str, str]]) -> str:
+    """Call the LLM using a stateful messages trajectory and safely extract JSON."""
     response = client.chat.completions.create(
         model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user",   "content": user_message},
-        ],
-        max_tokens=1000,
+        messages=messages,
+        max_tokens=1500,
         temperature=0.1,
     )
-    return response.choices[0].message.content.strip()
+    raw_content = response.choices[0].message.content.strip()
+    match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+    if match:
+        raw_content = match.group(0).strip()
+    return raw_content
 
 
 def build_prompt(obs_data: dict) -> str:
@@ -100,7 +101,7 @@ INSTRUCTIONS:
     if feedback:
         prompt += f"\nPREVIOUS FEEDBACK (use this to improve your answer):\n{feedback}\n"
 
-    prompt += "\nRespond with ONLY the JSON object, nothing else."
+    prompt += "\nRespond with your <thought> block followed by ONLY the JSON object, nothing else."
     return prompt
 
 
@@ -117,6 +118,9 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     score = 0.0
     success = False
 
+    # Initialize memory trajectory
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
     try:
         for step in range(1, 11):  # Max 10 steps per task
             # obs is a dict when using GenericEnvClient
@@ -132,12 +136,16 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
                 }
 
             prompt = build_prompt(full_obs)
+            messages.append({"role": "user", "content": prompt})
 
             try:
-                answer = call_llm(prompt)
+                answer = call_llm(messages)
+                messages.append({"role": "assistant", "content": answer})
             except Exception as e:
                 print(f"API ERROR: {e}")
                 answer = "{}"
+                # Append fallback to keep trajectory aligned
+                messages.append({"role": "assistant", "content": answer}) 
 
             # GenericEnvClient sends actions as dicts
             action = {
