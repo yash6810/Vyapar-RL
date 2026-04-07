@@ -27,6 +27,11 @@ load_dotenv()
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "")
 MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
+FALLBACK_MODELS = [
+    MODEL_NAME,
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "google/gemma-2-2b-it",
+]
 ENV_URL      = os.getenv("ENV_URL", "http://localhost:8000")
 BENCHMARK    = "Vyapar-RL"
 SUCCESS_SCORE_THRESHOLD = 0.3
@@ -72,18 +77,28 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
 
 # ─── LLM helpers ─────────────────────────────────────────────────────────────
 def call_llm(messages: List[Dict[str, str]]) -> str:
-    """Call the LLM using a stateful messages trajectory and safely extract JSON."""
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=messages,
-        max_tokens=1500,
-        temperature=0.1,
-    )
-    raw_content = response.choices[0].message.content.strip()
-    match = re.search(r'\{.*\}', raw_content, re.DOTALL)
-    if match:
-        raw_content = match.group(0).strip()
-    return raw_content
+    """Call the LLM using a stateful messages trajectory and safely extract JSON.
+    Tries fallback models if the primary model's quota is exhausted."""
+    last_error = None
+    for model in FALLBACK_MODELS:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=1500,
+                temperature=0.1,
+            )
+            raw_content = response.choices[0].message.content.strip()
+            match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+            if match:
+                raw_content = match.group(0).strip()
+            return raw_content
+        except Exception as e:
+            last_error = e
+            print(f"Model {model} failed: {e}", flush=True)
+            continue
+    # All models failed — re-raise the last error so the caller's except handles it
+    raise last_error
 
 
 def build_prompt(obs_data: dict) -> str:
