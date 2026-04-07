@@ -13,6 +13,9 @@ import json
 import os
 import sys
 import re
+import time
+import urllib.request
+import urllib.error
 from typing import List, Optional, Dict
 
 from openai import OpenAI
@@ -192,9 +195,31 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     return rewards
 
 
+# ─── Wait for environment ─────────────────────────────────────────────────────
+def wait_for_env(base_url: str, timeout: int = 120, interval: int = 3) -> None:
+    """Poll the environment health endpoint until it responds or timeout."""
+    health_url = base_url.rstrip("/") + "/health"
+    deadline = time.time() + timeout
+    print(f"Waiting for environment at {health_url} ...", flush=True)
+    while time.time() < deadline:
+        try:
+            req = urllib.request.Request(health_url, method="GET")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    print(f"Environment ready!", flush=True)
+                    return
+        except Exception:
+            pass
+        time.sleep(interval)
+    print(f"WARNING: Environment did not respond within {timeout}s, attempting connection anyway.", flush=True)
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
     from openenv import GenericEnvClient
+
+    # Wait for env container to be healthy before connecting
+    wait_for_env(ENV_URL)
 
     all_rewards = []
 
@@ -204,10 +229,21 @@ def main():
         ("GSTR1-vs-GSTR2A-Reconciliation",      2),
     ]
 
-    with GenericEnvClient(base_url=ENV_URL).sync() as env:
-        for task_name, task_index in task_configs:
-            task_rewards = run_task(env, task_name, task_index)
-            all_rewards.extend(task_rewards)
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            with GenericEnvClient(base_url=ENV_URL).sync() as env:
+                for task_name, task_index in task_configs:
+                    task_rewards = run_task(env, task_name, task_index)
+                    all_rewards.extend(task_rewards)
+            break  # Success — exit retry loop
+        except Exception as e:
+            print(f"Connection attempt {attempt}/{max_retries} failed: {e}", flush=True)
+            if attempt < max_retries:
+                time.sleep(5)
+            else:
+                print(f"ERROR: All {max_retries} connection attempts failed.", flush=True)
+                raise
 
     # Machine-readable summary
     overall_avg = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
