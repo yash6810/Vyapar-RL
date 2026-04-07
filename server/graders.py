@@ -29,10 +29,13 @@ def grade_task1(agent_answer_str: str, golden_answer: Dict[str, int]) -> tuple[f
     wrong_ids = []
     correct = 0
     for k, expected_slab in golden_answer.items():
-        agent_slab = parsed.get(str(k))
-        if agent_slab is not None and int(agent_slab) == expected_slab:
-            correct += 1
-        else:
+        try:
+            agent_slab = parsed.get(str(k))
+            if agent_slab is not None and int(agent_slab) == expected_slab:
+                correct += 1
+            else:
+                wrong_ids.append(str(k))
+        except (ValueError, TypeError):
             wrong_ids.append(str(k))
 
     score = round(correct / len(golden_answer), 4)
@@ -62,11 +65,16 @@ def grade_task2(agent_answer_str: str, golden_answer: Dict[str, float]) -> tuple
         if field not in golden_answer:
             continue
         expected = float(golden_answer[field])
-        got = float(parsed.get(field, -999))
+        
+        try:
+            val = parsed.get(field)
+            got = float(val) if val is not None else -999.0
+        except (ValueError, TypeError):
+            got = -999.0
 
-        if got == -999:
+        if got == -999.0:
             scores.append(0.0)
-            wrong_fields.append(f"{field} (missing)")
+            wrong_fields.append(f"{field} (missing or invalid)")
             continue
 
         if expected == 0:
@@ -104,9 +112,18 @@ def grade_task3(agent_answer_str: str, golden_answer: Dict[str, Any]) -> tuple[f
     if not is_valid or not parsed or "mismatches" not in parsed:
         return 0.0, "Invalid JSON. Must include 'mismatches' list and 'total_itc_at_risk'."
 
-    agent_mismatches = {m["invoice_no"]: m for m in parsed.get("mismatches", [])
-                        if "invoice_no" in m}
-    golden_mismatches = {m["invoice_no"]: m for m in golden_answer.get("mismatches", [])}
+    try:
+            mismatches = parsed.get("mismatches", [])
+            if not isinstance(mismatches, list):
+                mismatches = []
+            agent_mismatches = {m["invoice_no"]: m for m in mismatches if isinstance(m, dict) and "invoice_no" in m}
+    except Exception:
+        agent_mismatches = {}
+
+    try:
+        golden_mismatches = {m["invoice_no"]: m for m in golden_answer.get("mismatches", [])}
+    except Exception:
+        golden_mismatches = {}
 
     if not golden_mismatches:
         return 1.0, "No mismatches expected and none found!"
@@ -124,7 +141,12 @@ def grade_task3(agent_answer_str: str, golden_answer: Dict[str, Any]) -> tuple[f
 
     # Score 3: ITC computation (30%) — is total_itc_at_risk correct?
     expected_itc = float(golden_answer.get("total_itc_at_risk", 0))
-    agent_itc = float(parsed.get("total_itc_at_risk", 0))
+    try:
+        val = parsed.get("total_itc_at_risk", 0)
+        agent_itc = float(val) if val is not None else 0.0
+    except (ValueError, TypeError):
+        agent_itc = 0.0
+
     if expected_itc == 0:
         itc_score = 1.0 if agent_itc == 0 else 0.0
     else:
