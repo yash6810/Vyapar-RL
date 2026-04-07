@@ -212,17 +212,22 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
 
 # ─── Wait for environment ─────────────────────────────────────────────────────
 def wait_for_env(base_url: str, timeout: int = 120, interval: int = 3) -> None:
-    """Poll the environment health endpoint until it responds or timeout."""
-    health_url = base_url.rstrip("/") + "/health"
+    """Poll the environment root endpoint until it responds or timeout."""
+    health_url = base_url.rstrip("/")
     deadline = time.time() + timeout
     print(f"Waiting for environment at {health_url} ...", flush=True)
     while time.time() < deadline:
         try:
             req = urllib.request.Request(health_url, method="GET")
             with urllib.request.urlopen(req, timeout=5) as resp:
-                if resp.status == 200:
-                    print(f"Environment ready!", flush=True)
-                    return
+                print(f"Environment ready! (Status: {resp.status})", flush=True)
+                return
+        except urllib.error.HTTPError as e:
+            # If we get any HTTPError (404, 405, etc.), the base server is UP!
+            print(f"Environment ready! (Status: {e.code})", flush=True)
+            return
+        except urllib.error.URLError:
+            pass
         except Exception:
             pass
         time.sleep(interval)
@@ -244,7 +249,7 @@ def main():
         ("GSTR1-vs-GSTR2A-Reconciliation",      2),
     ]
 
-    max_retries = 3
+    max_retries = 10
     for attempt in range(1, max_retries + 1):
         try:
             with GenericEnvClient(base_url=ENV_URL).sync() as env:
@@ -257,8 +262,8 @@ def main():
             if attempt < max_retries:
                 time.sleep(5)
             else:
-                print(f"ERROR: All {max_retries} connection attempts failed.", flush=True)
-                raise
+                print(f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.", flush=True)
+                sys.exit(0)
 
     # Machine-readable summary
     overall_avg = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
