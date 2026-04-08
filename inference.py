@@ -255,18 +255,64 @@ def main():
         ("GSTR1-vs-GSTR2A-Reconciliation", 2),
     ]
 
-    max_retries = 25
-    retry_delay = 12
+    max_retries = 30
+    retry_delay = 15
     for attempt in range(1, max_retries + 1):
         try:
-            with GenericEnvClient(base_url=ENV_URL).sync() as env:
+            # Use longer timeouts for HF Spaces
+            with GenericEnvClient(
+                base_url=ENV_URL, connect_timeout_s=60.0, message_timeout_s=120.0
+            ).sync() as env:
                 for task_name, task_index in task_configs:
                     task_rewards = run_task(env, task_name, task_index)
                     all_rewards.extend(task_rewards)
             break
-        except (KeyboardInterrupt, SystemExit):
-            print("Exiting...", flush=True)
-            sys.exit(0)
+        except Exception as e:
+            import traceback
+
+            print(
+                f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}",
+                flush=True,
+            )
+            traceback.print_exc()
+            if attempt < max_retries:
+                print(f"Retrying in {retry_delay}s...", flush=True)
+                time.sleep(retry_delay)
+            else:
+                print(
+                    f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
+                    flush=True,
+                )
+                overall_avg = 0.0
+                result = {
+                    "overall_avg": overall_avg,
+                    "all_rewards": [],
+                }
+                print("\nJSON_RESULT:", json.dumps(result))
+                sys.exit(0)
+        except Exception as e:
+            import traceback
+
+            print(
+                f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}",
+                flush=True,
+            )
+            traceback.print_exc()
+            if attempt < max_retries:
+                print(f"Retrying in {retry_delay}s...", flush=True)
+                time.sleep(retry_delay)
+            else:
+                print(
+                    f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
+                    flush=True,
+                )
+                overall_avg = 0.0
+                result = {
+                    "overall_avg": overall_avg,
+                    "all_rewards": [],
+                }
+                print("\nJSON_RESULT:", json.dumps(result))
+                sys.exit(0)
         except Exception as e:
             import traceback
 
