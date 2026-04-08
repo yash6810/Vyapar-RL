@@ -18,6 +18,7 @@ import time
 import urllib.request
 import urllib.error
 from typing import List, Optional, Dict
+from dataclasses import dataclass, field
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -35,6 +36,57 @@ FALLBACK_MODELS = [
 ENV_URL = os.getenv("ENV_URL", "http://localhost:7860")
 BENCHMARK = "Vyapar-RL"
 SUCCESS_SCORE_THRESHOLD = 0.3
+
+
+@dataclass
+class HTTPEnvResult:
+    """Simple result object mimicking GenericEnvClient response."""
+    observation: dict = field(default_factory=dict)
+    reward: float = 0.0
+    done: bool = False
+
+
+class HTTPEnvClient:
+    """
+    HTTP-based environment client that uses POST requests instead of WebSocket.
+    This avoids WebSocket connection issues on HuggingFace Spaces.
+    """
+
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip("/")
+
+    def _post(self, endpoint: str, data: dict) -> dict:
+        """Make a POST request and return parsed JSON response."""
+        url = f"{self.base_url}/{endpoint}"
+        payload = json.dumps(data).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    def reset(self, **kwargs) -> HTTPEnvResult:
+        """POST /reset and return observation."""
+        resp = self._post("reset", kwargs)
+        obs = resp.get("observation", resp)
+        return HTTPEnvResult(
+            observation=obs,
+            reward=obs.get("reward", 0.0),
+            done=obs.get("done", False),
+        )
+
+    def step(self, action: dict) -> HTTPEnvResult:
+        """POST /step with action and return observation."""
+        resp = self._post("step", {"action": action})
+        obs = resp.get("observation", resp)
+        return HTTPEnvResult(
+            observation=obs,
+            reward=obs.get("reward", obs.get("score", 0.0)),
+            done=obs.get("done", False),
+        )
 
 if not API_KEY:
     print("ERROR: HF_TOKEN environment variable not set.")
@@ -70,7 +122,7 @@ def log_step(
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(
-        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
+        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}",
         flush=True,
     )
 
@@ -243,8 +295,6 @@ def wait_for_env(base_url: str, timeout: int = 180, interval: int = 5) -> bool:
 
 
 def main():
-    from openenv import GenericEnvClient
-
     wait_for_env(ENV_URL)
 
     all_rewards = []
@@ -259,10 +309,10 @@ def main():
     retry_delay = 12
     for attempt in range(1, max_retries + 1):
         try:
-            with GenericEnvClient(base_url=ENV_URL).sync() as env:
-                for task_name, task_index in task_configs:
-                    task_rewards = run_task(env, task_name, task_index)
-                    all_rewards.extend(task_rewards)
+            env = HTTPEnvClient(base_url=ENV_URL)
+            for task_name, task_index in task_configs:
+                task_rewards = run_task(env, task_name, task_index)
+                all_rewards.extend(task_rewards)
             break
         except (KeyboardInterrupt, SystemExit):
             print("Exiting...", flush=True)

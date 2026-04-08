@@ -1,6 +1,6 @@
-PROBLEM STATEMENT
+﻿PROBLEM STATEMENT
 
-Round 1 — Problem Statement
+Round 1 â€” Problem Statement
 
 The Task
 
@@ -12,7 +12,7 @@ Must simulate a real-world task (not games or toys)
 
 Implement full OpenEnv spec: typed models, step()/reset()/state(), openenv.yaml
 
-Minimum 3 tasks with agent graders (easy → medium → hard, scores 0.0–1.0)
+Minimum 3 tasks with agent graders (easy â†’ medium â†’ hard, scores 0.0â€“1.0)
 
 Meaningful reward function with partial progress signals
 
@@ -30,11 +30,11 @@ The environment must simulate a task humans actually do. Not games, not toys. Ex
 
 OpenEnv spec compliance
 
-Implement the full OpenEnv interface: typed Observation, Action, and Reward Pydantic models. step(action) → returns observation, reward, done, info. reset() → returns initial observation. state() → returns current state. openenv.yaml with metadata. Tested via openenv validate.
+Implement the full OpenEnv interface: typed Observation, Action, and Reward Pydantic models. step(action) â†’ returns observation, reward, done, info. reset() â†’ returns initial observation. state() â†’ returns current state. openenv.yaml with metadata. Tested via openenv validate.
 
 Minimum 3 tasks with agent graders
 
-Each task defines a concrete objective an agent must accomplish, with a programmatic grader that scores performance (0.0–1.0). Tasks should range: easy → medium → hard. Graders must have clear, deterministic success/failure criteria.
+Each task defines a concrete objective an agent must accomplish, with a programmatic grader that scores performance (0.0â€“1.0). Tasks should range: easy â†’ medium â†’ hard. Graders must have clear, deterministic success/failure criteria.
 
 Meaningful reward function
 
@@ -100,61 +100,61 @@ Scoring Breakdown
 
 Real-world utility (30%)
 
-•  0–5: Toy/artificial problem with no practical application
+â€¢  0â€“5: Toy/artificial problem with no practical application
 
-•  6–15: Valid domain but shallow modeling of the real task
+â€¢  6â€“15: Valid domain but shallow modeling of the real task
 
-•  16–25: Good domain modeling, would be useful for agent evaluation
+â€¢  16â€“25: Good domain modeling, would be useful for agent evaluation
 
-•  26–30: Excellent — fills a real gap, immediate value for the RL/agent community
+â€¢  26â€“30: Excellent â€” fills a real gap, immediate value for the RL/agent community
 
 Task & grader quality (25%)
 
-•  3+ tasks with difficulty range?
+â€¢  3+ tasks with difficulty range?
 
-•  Graders produce scores between 0.0–1.0?
+â€¢  Graders produce scores between 0.0â€“1.0?
 
-•  Graders deterministic and reproducible?
+â€¢  Graders deterministic and reproducible?
 
-•  Hard task genuinely challenges frontier models?
+â€¢  Hard task genuinely challenges frontier models?
 
 Environment design (20%)
 
-•  reset() produces clean state?
+â€¢  reset() produces clean state?
 
-•  Action/observation types well-designed and documented?
+â€¢  Action/observation types well-designed and documented?
 
-•  Reward function provides useful varying signal (not just sparse)?
+â€¢  Reward function provides useful varying signal (not just sparse)?
 
-•  Episode boundaries sensible?
+â€¢  Episode boundaries sensible?
 
 Code quality & spec compliance (15%)
 
-•  openenv validate passes?
+â€¢  openenv validate passes?
 
-•  docker build && docker run works?
+â€¢  docker build && docker run works?
 
-•  HF Space deploys and responds?
+â€¢  HF Space deploys and responds?
 
-•  Baseline script runs and reproduces scores?
+â€¢  Baseline script runs and reproduces scores?
 
 Creativity & novelty (10%)
 
-•  Domain we haven’t seen in OpenEnv before?
+â€¢  Domain we havenâ€™t seen in OpenEnv before?
 
-•  Reward design has interesting properties?
+â€¢  Reward design has interesting properties?
 
-•  Clever mechanics that make the environment engaging?
+â€¢  Clever mechanics that make the environment engaging?
 
 Evaluation Criteria
 
 Phase 1: Automated Validation
 
-Pass/fail gate — HF Space deploys, OpenEnv spec compliance, Dockerfile builds, baseline reproduces, 3+ tasks with graders.
+Pass/fail gate â€” HF Space deploys, OpenEnv spec compliance, Dockerfile builds, baseline reproduces, 3+ tasks with graders.
 
 Phase 2: Agentic Evaluation
 
-Scored — baseline agent re-run, standard Open LLM agent (e.g. Nemotron 3 Super) run against all environments, score variance check.
+Scored â€” baseline agent re-run, standard Open LLM agent (e.g. Nemotron 3 Super) run against all environments, score variance check.
 
 Phase 3: Human Review
 
@@ -172,11 +172,11 @@ No baseline inference script
 
 How Judging works
 
-Pre-Submission Checklist  — all must pass or you're disqualified
+Pre-Submission Checklist  â€” all must pass or you're disqualified
 
 HF Space deploys
 
-Automated ping to the Space URL — must return 200 and respond to reset()
+Automated ping to the Space URL â€” must return 200 and respond to reset()
 
 OpenEnv spec compliance
 
@@ -188,11 +188,11 @@ Automated docker build on the submitted repo
 
 Baseline reproduces
 
-Run the submitted inference script — must complete without error and produce scores
+Run the submitted inference script â€” must complete without error and produce scores
 
 3+ tasks with graders
 
-Enumerate tasks, run each grader, verify scores in 0.0–1.0 range
+Enumerate tasks, run each grader, verify scores in 0.0â€“1.0 range
 
 Mandatory Additional Instructions
 
@@ -245,7 +245,7 @@ STDOUT FORMAT
 
     [START] task=<task_name> env=<benchmark> model=<model_name>
     [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
-    [END]   success=<true|false> steps=<n> rewards=<r1,r2,...,rn>
+    [END]   success=<true|false> steps=<n> score=<score> rewards=<r1,r2,...,rn>
 
   Rules:
     - One [START] line at episode begin.
@@ -255,13 +255,14 @@ STDOUT FORMAT
     - done and success are lowercase booleans: true or false.
     - error is the raw last_action_error string, or null if none.
     - All fields on a single line with no newlines within a line.
+    - Each tasks should return score in [0, 1]
 
   Example:
     [START] task=click-test env=miniwob model=Qwen3-VL-30B
     [STEP] step=1 action=click('123') reward=0.00 done=false error=null
     [STEP] step=2 action=fill('456','text') reward=0.00 done=false error=null
     [STEP] step=3 action=click('789') reward=1.00 done=true error=null
-    [END] success=true steps=3 rewards=0.00,0.00,1.00
+    [END] success=true steps=3 score=1.00 rewards=0.00,0.00,1.00
 """
 
 import asyncio
@@ -294,7 +295,7 @@ SYSTEM_PROMPT = textwrap.dedent(
     Each turn you must send a message. The environment will echo it back.
     Reward is proportional to message length: reward = len(message) * 0.1
     Your goal is to maximize total reward by sending meaningful, substantive messages.
-    Reply with exactly one message string — no quotes, no prefixes, just the message text.
+    Reply with exactly one message string â€” no quotes, no prefixes, just the message text.
     """
 ).strip()
 
@@ -314,7 +315,7 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
 
 
 def build_user_prompt(step: int, last_echoed: str, last_reward: float, history: List[str]) -> str:
@@ -412,7 +413,7 @@ if __name__ == "__main__":
 Pre Validation Script
 #!/usr/bin/env bash
 #
-# validate-submission.sh — OpenEnv Submission Validator
+# validate-submission.sh â€” OpenEnv Submission Validator
 #
 # Checks that your HF Space is live, Docker image builds, and openenv validate passes.
 #
