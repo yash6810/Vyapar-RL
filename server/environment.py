@@ -1,6 +1,7 @@
 """
 server/environment.py — Core OpenEnv Environment implementation.
 """
+
 import json
 import random
 import uuid
@@ -16,14 +17,32 @@ from server.graders import grade_task1, grade_task2, grade_task3, compute_reward
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 TASK_CONFIGS = [
-    {"task_id": "task1", "name": "Transaction GST Classifier",           "difficulty": "easy",   "max_steps": 3, "data_file": "task1_easy.json"},
-    {"task_id": "task2", "name": "Quarterly GST Liability Calculator",   "difficulty": "medium", "max_steps": 4, "data_file": "task2_medium.json"},
-    {"task_id": "task3", "name": "GSTR-1 vs GSTR-2A Reconciliation",    "difficulty": "hard",   "max_steps": 5, "data_file": "task3_hard.json"},
+    {
+        "task_id": "task1",
+        "name": "Transaction GST Classifier",
+        "difficulty": "easy",
+        "max_steps": 3,
+        "data_file": "task1_easy.json",
+    },
+    {
+        "task_id": "task2",
+        "name": "Quarterly GST Liability Calculator",
+        "difficulty": "medium",
+        "max_steps": 4,
+        "data_file": "task2_medium.json",
+    },
+    {
+        "task_id": "task3",
+        "name": "GSTR-1 vs GSTR-2A Reconciliation",
+        "difficulty": "hard",
+        "max_steps": 5,
+        "data_file": "task3_hard.json",
+    },
 ]
 
 INSTRUCTIONS = {
     "task1": 'Return a JSON object mapping transaction IDs to GST slabs. Example: {"1": 18, "2": 5, "3": 0}. Valid slabs: 0, 5, 12, 18, 28.',
-    "task2": 'Return a JSON with keys: total_sales_value, total_purchase_value, cgst_payable, sgst_payable, igst_payable, total_itc, net_gst_liability. All values in INR.',
+    "task2": "Return a JSON with keys: total_sales_value, total_purchase_value, cgst_payable, sgst_payable, igst_payable, total_itc, net_gst_liability. All values in INR.",
     "task3": 'Return a JSON with "mismatches" (list of objects with invoice_no, mismatch_type, gstr1_tax_amount, gstr2a_tax_amount, itc_at_risk) and "total_itc_at_risk". mismatch_type must be one of: amount_mismatch, missing_in_gstr2a, extra_in_gstr2a.',
 }
 
@@ -61,7 +80,9 @@ class GSTEnvironment(Environment):
         episodes = self._task_datasets[task_id]
         return random.choice(episodes)
 
-    def reset(self, seed=None, episode_id=None, task_index=None, **kwargs) -> GSTObservation:
+    def reset(
+        self, seed=None, episode_id=None, task_index=None, **kwargs
+    ) -> GSTObservation:
         if seed is not None:
             random.seed(seed)
 
@@ -89,14 +110,20 @@ class GSTEnvironment(Environment):
 
         return self._build_observation(reward=0.0, done=False)
 
-    def step(self, action: GSTAction, **kwargs) -> GSTObservation:
+    def step(self, action, **kwargs) -> GSTObservation:
         self._state.step_count += 1
         cfg = self._get_task_config()
         task_id = cfg["task_id"]
         max_steps = cfg["max_steps"]
 
+        # Handle both GSTAction objects and dicts from GenericEnvClient
+        if isinstance(action, dict):
+            answer_str = action.get("answer", "{}")
+        else:
+            answer_str = action.answer
+
         # Grade the action
-        task_score, feedback = self._grade_action(action, task_id)
+        task_score, feedback = self._grade_action(answer_str, task_id)
         reward = compute_reward(task_score, self._state.step_count, is_valid=True)
         self._last_feedback = feedback
         self._state.total_score = round(self._state.total_score + reward, 4)
@@ -115,7 +142,9 @@ class GSTEnvironment(Environment):
                 self._current_golden = episode.get("golden_answer", {})
                 self._last_feedback = f"Task {task_id} complete (score={task_score}). Moving to next task."
                 self._state.step_count = 0
-                self._state.current_task_id = TASK_CONFIGS[self._current_task_index]["task_id"]
+                self._state.current_task_id = TASK_CONFIGS[self._current_task_index][
+                    "task_id"
+                ]
                 self._state.current_task_index = self._current_task_index
             else:
                 all_done = True
@@ -123,13 +152,13 @@ class GSTEnvironment(Environment):
 
         return self._build_observation(reward=reward, done=all_done)
 
-    def _grade_action(self, action: GSTAction, task_id: str) -> tuple[float, str]:
+    def _grade_action(self, answer_str: str, task_id: str) -> tuple[float, str]:
         if task_id == "task1":
-            return grade_task1(action.answer, self._current_golden)
+            return grade_task1(answer_str, self._current_golden)
         elif task_id == "task2":
-            return grade_task2(action.answer, self._current_golden)
+            return grade_task2(answer_str, self._current_golden)
         elif task_id == "task3":
-            return grade_task3(action.answer, self._current_golden)
+            return grade_task3(answer_str, self._current_golden)
         return 0.0, "Unknown task"
 
     def _build_observation(self, reward: float, done: bool) -> GSTObservation:
@@ -137,8 +166,13 @@ class GSTEnvironment(Environment):
         task_id = cfg["task_id"]
 
         # Build task_data payload (remove golden_answer before sending to agent)
-        task_data = {k: v for k, v in self._current_episode_data.items()
-                     if k != "golden_answer"}
+        task_data = {}
+        if self._current_episode_data:
+            task_data = {
+                k: v
+                for k, v in self._current_episode_data.items()
+                if k != "golden_answer"
+            }
 
         return GSTObservation(
             task_id=task_id,
@@ -158,7 +192,7 @@ class GSTEnvironment(Environment):
                 "difficulty": cfg["difficulty"],
                 "step": self._state.step_count,
                 "total_score": self._state.total_score,
-            }
+            },
         )
 
     @property

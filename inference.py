@@ -9,6 +9,7 @@ STDOUT FORMAT (mandatory):
   [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
   [END]   success=<true|false> steps=<n> score=<float> rewards=<r1,r2,...,rn>
 """
+
 import json
 import os
 import sys
@@ -23,17 +24,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ─── Configuration ────────────────────────────────────────────────────────────
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "")
-MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
+API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
 FALLBACK_MODELS = [
     MODEL_NAME,
     "mistralai/Mistral-7B-Instruct-v0.3",
     "google/gemma-2-2b-it",
 ]
-ENV_URL      = os.getenv("ENV_URL", "http://localhost:8000")
-BENCHMARK    = "Vyapar-RL"
+ENV_URL = os.getenv("ENV_URL", "http://localhost:7860")
+BENCHMARK = "Vyapar-RL"
 SUCCESS_SCORE_THRESHOLD = 0.3
 
 if not API_KEY:
@@ -43,7 +43,6 @@ if not API_KEY:
 
 client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
-# ─── System prompt ────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """You are an expert Indian GST compliance assistant with deep knowledge of:
 - GST slab rates (0%, 5%, 12%, 18%, 28%) and which goods/services fall in each
 - Quarterly GST liability computation (CGST, SGST, IGST, ITC)
@@ -53,12 +52,13 @@ Before answering, write a <thought>...</thought> block analyzing the mathematica
 Be precise with numbers. Indian tax laws are strict about accuracy."""
 
 
-# ─── Mandatory stdout logging ────────────────────────────────────────────────
 def log_start(task: str, env: str, model: str) -> None:
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
 
-def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+def log_step(
+    step: int, action: str, reward: float, done: bool, error: Optional[str]
+) -> None:
     error_val = error if error else "null"
     done_val = str(done).lower()
     print(
@@ -75,11 +75,8 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
     )
 
 
-# ─── LLM helpers ─────────────────────────────────────────────────────────────
 def call_llm(messages: List[Dict[str, str]]) -> str:
-    """Call the LLM using a stateful messages trajectory and safely extract JSON.
-    Tries fallback models if the primary model's quota is exhausted."""
-    last_error = None
+    last_error = Exception("All models failed")
     for model in FALLBACK_MODELS:
         try:
             response = client.chat.completions.create(
@@ -89,7 +86,7 @@ def call_llm(messages: List[Dict[str, str]]) -> str:
                 temperature=0.1,
             )
             raw_content = response.choices[0].message.content.strip()
-            match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+            match = re.search(r"\{.*\}", raw_content, re.DOTALL)
             if match:
                 raw_content = match.group(0).strip()
             return raw_content
@@ -97,16 +94,14 @@ def call_llm(messages: List[Dict[str, str]]) -> str:
             last_error = e
             print(f"Model {model} failed: {e}", flush=True)
             continue
-    # All models failed — re-raise the last error so the caller's except handles it
     raise last_error
 
 
 def build_prompt(obs_data: dict) -> str:
-    """Build a clear prompt from the observation dict."""
     task_name = obs_data.get("task_name", "")
     task_data = obs_data.get("task_data", {})
-    instruct  = obs_data.get("instructions", "")
-    feedback  = obs_data.get("feedback", "")
+    instruct = obs_data.get("instructions", "")
+    feedback = obs_data.get("feedback", "")
 
     prompt = f"""TASK: {task_name}
 
@@ -117,40 +112,37 @@ INSTRUCTIONS:
 {instruct}
 """
     if feedback:
-        prompt += f"\nPREVIOUS FEEDBACK (use this to improve your answer):\n{feedback}\n"
+        prompt += (
+            f"\nPREVIOUS FEEDBACK (use this to improve your answer):\n{feedback}\n"
+        )
 
     prompt += "\nRespond with your <thought> block followed by ONLY the JSON object, nothing else."
     return prompt
 
 
-# ─── Task runner ──────────────────────────────────────────────────────────────
 def run_task(env_client, task_name: str, task_index: int) -> List[float]:
-    """Run a single task, emitting [START]/[STEP]/[END] logs."""
     log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
 
-    # GenericEnvClient returns result objects with .observation (dict), .reward, .done
     result = env_client.reset(task_index=task_index)
-    obs = result.observation if hasattr(result, 'observation') else result
+    obs = result.observation if hasattr(result, "observation") else result
     rewards: List[float] = []
     steps_taken = 0
     score = 0.0
     success = False
 
-    # Initialize memory trajectory
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
     try:
-        for step in range(1, 11):  # Max 10 steps per task
-            # obs is a dict when using GenericEnvClient
+        for step in range(1, 11):
             if isinstance(obs, dict):
                 full_obs = obs
             else:
                 full_obs = {
-                    "task_id":      getattr(obs, "task_id",      ""),
-                    "task_name":    getattr(obs, "task_name",    ""),
-                    "task_data":    getattr(obs, "task_data",    {}),
+                    "task_id": getattr(obs, "task_id", ""),
+                    "task_name": getattr(obs, "task_name", ""),
+                    "task_data": getattr(obs, "task_data", {}),
                     "instructions": getattr(obs, "instructions", ""),
-                    "feedback":     getattr(obs, "feedback",     ""),
+                    "feedback": getattr(obs, "feedback", ""),
                 }
 
             prompt = build_prompt(full_obs)
@@ -160,12 +152,10 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
                 answer = call_llm(messages)
                 messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                print(f"API ERROR: {e}")
+                print(f"API ERROR: {e}", flush=True)
                 answer = "{}"
-                # Append fallback to keep trajectory aligned
-                messages.append({"role": "assistant", "content": answer}) 
+                messages.append({"role": "assistant", "content": answer})
 
-            # GenericEnvClient sends actions as dicts
             action = {
                 "task_id": full_obs.get("task_id", f"task{task_index + 1}"),
                 "action_type": "submit_answer",
@@ -173,16 +163,16 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
             }
 
             result = env_client.step(action)
-            obs = result.observation if hasattr(result, 'observation') else result
+            obs = result.observation if hasattr(result, "observation") else result
 
-            if hasattr(result, 'reward'):
+            if hasattr(result, "reward"):
                 reward = result.reward or 0.0
             elif isinstance(obs, dict):
                 reward = obs.get("score", obs.get("reward", 0.0)) or 0.0
             else:
                 reward = 0.0
 
-            if hasattr(result, 'done'):
+            if hasattr(result, "done"):
                 done = result.done
             elif isinstance(obs, dict):
                 done = obs.get("done", False)
@@ -193,9 +183,10 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
             rewards.append(reward)
             steps_taken = step
 
-            # Sanitize action string for single-line log output
             action_str = answer.replace("\n", " ")[:200]
-            log_step(step=step, action=action_str, reward=reward, done=done, error=error)
+            log_step(
+                step=step, action=action_str, reward=reward, done=done, error=error
+            )
 
             if done:
                 break
@@ -210,9 +201,7 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     return rewards
 
 
-# ─── Wait for environment ─────────────────────────────────────────────────────
-def wait_for_env(base_url: str, timeout: int = 120, interval: int = 3) -> None:
-    """Poll the environment root endpoint until it responds or timeout."""
+def wait_for_env(base_url: str, timeout: int = 120, interval: int = 3) -> bool:
     health_url = base_url.rstrip("/")
     deadline = time.time() + timeout
     print(f"Waiting for environment at {health_url} ...", flush=True)
@@ -221,51 +210,54 @@ def wait_for_env(base_url: str, timeout: int = 120, interval: int = 3) -> None:
             req = urllib.request.Request(health_url, method="GET")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 print(f"Environment ready! (Status: {resp.status})", flush=True)
-                return
+                return True
         except urllib.error.HTTPError as e:
-            # If we get any HTTPError (404, 405, etc.), the base server is UP!
             print(f"Environment ready! (Status: {e.code})", flush=True)
-            return
+            return True
         except urllib.error.URLError:
             pass
         except Exception:
             pass
         time.sleep(interval)
-    print(f"WARNING: Environment did not respond within {timeout}s, attempting connection anyway.", flush=True)
+    print(
+        f"WARNING: Environment did not respond within {timeout}s, attempting connection anyway.",
+        flush=True,
+    )
+    return True
 
 
-# ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
     from openenv import GenericEnvClient
 
-    # Wait for env container to be healthy before connecting
     wait_for_env(ENV_URL)
 
     all_rewards = []
 
     task_configs = [
-        ("Transaction-GST-Classifier",         0),
-        ("Quarterly-GST-Liability-Calculator",  1),
-        ("GSTR1-vs-GSTR2A-Reconciliation",      2),
+        ("Transaction-GST-Classifier", 0),
+        ("Quarterly-GST-Liability-Calculator", 1),
+        ("GSTR1-vs-GSTR2A-Reconciliation", 2),
     ]
 
-    max_retries = 10
+    max_retries = 15
     for attempt in range(1, max_retries + 1):
         try:
             with GenericEnvClient(base_url=ENV_URL).sync() as env:
                 for task_name, task_index in task_configs:
                     task_rewards = run_task(env, task_name, task_index)
                     all_rewards.extend(task_rewards)
-            break  # Success — exit retry loop
+            break
         except Exception as e:
             print(f"Connection attempt {attempt}/{max_retries} failed: {e}", flush=True)
             if attempt < max_retries:
-                time.sleep(5)
+                time.sleep(8)
             else:
-                print(f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.", flush=True)
+                print(
+                    f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
+                    flush=True,
+                )
                 sys.exit(0)
 
-    # Machine-readable summary
     overall_avg = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
     result = {
         "overall_avg": round(overall_avg, 4),

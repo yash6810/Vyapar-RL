@@ -2,6 +2,7 @@
 server/graders.py — Deterministic graders for all 3 tasks.
 Each grader returns a float in [0.0, 1.0].
 """
+
 import json
 from typing import Any, Dict
 
@@ -17,14 +18,16 @@ def safe_parse_json(answer_str: str) -> tuple[dict | None, bool]:
         return None, False
 
 
-def grade_task1(agent_answer_str: str, golden_answer: Dict[str, int]) -> tuple[float, str]:
+def grade_task1(
+    agent_answer_str: str, golden_answer: Dict[str, int]
+) -> tuple[float, str]:
     """
     Task 1 grader: GST slab classification.
     Returns (score, feedback_string).
     """
     parsed, is_valid = safe_parse_json(agent_answer_str)
     if not is_valid or not parsed:
-        return 0.0, "Invalid JSON. Return format: {\"1\": 18, \"2\": 5, ...}"
+        return 0.0, 'Invalid JSON. Return format: {"1": 18, "2": 5, ...}'
 
     wrong_ids = []
     correct = 0
@@ -38,7 +41,7 @@ def grade_task1(agent_answer_str: str, golden_answer: Dict[str, int]) -> tuple[f
         except (ValueError, TypeError):
             wrong_ids.append(str(k))
 
-    score = round(correct / len(golden_answer), 4)
+    score = round(correct / len(golden_answer), 4) if golden_answer else 0.0
     if wrong_ids:
         feedback = f"Wrong classification for transaction IDs: {', '.join(wrong_ids)}. Check GST slab boundaries."
     else:
@@ -46,18 +49,29 @@ def grade_task1(agent_answer_str: str, golden_answer: Dict[str, int]) -> tuple[f
     return score, feedback
 
 
-def grade_task2(agent_answer_str: str, golden_answer: Dict[str, float]) -> tuple[float, str]:
+def grade_task2(
+    agent_answer_str: str, golden_answer: Dict[str, float]
+) -> tuple[float, str]:
     """
     Task 2 grader: Quarterly GST liability computation.
     Returns (score, feedback_string).
     """
     parsed, is_valid = safe_parse_json(agent_answer_str)
     if not is_valid or not parsed:
-        return 0.0, "Invalid JSON. Return format: {\"total_sales_value\": ..., \"cgst_payable\": ..., etc.}"
+        return (
+            0.0,
+            'Invalid JSON. Return format: {"total_sales_value": ..., "cgst_payable": ..., etc.}',
+        )
 
-    fields = ["total_sales_value", "total_purchase_value",
-              "cgst_payable", "sgst_payable", "igst_payable",
-              "total_itc", "net_gst_liability"]
+    fields = [
+        "total_sales_value",
+        "total_purchase_value",
+        "cgst_payable",
+        "sgst_payable",
+        "igst_payable",
+        "total_itc",
+        "net_gst_liability",
+    ]
     scores = []
     wrong_fields = []
 
@@ -65,7 +79,7 @@ def grade_task2(agent_answer_str: str, golden_answer: Dict[str, float]) -> tuple
         if field not in golden_answer:
             continue
         expected = float(golden_answer[field])
-        
+
         try:
             val = parsed.get(field)
             got = float(val) if val is not None else -999.0
@@ -103,25 +117,36 @@ def grade_task2(agent_answer_str: str, golden_answer: Dict[str, float]) -> tuple
     return score, feedback
 
 
-def grade_task3(agent_answer_str: str, golden_answer: Dict[str, Any]) -> tuple[float, str]:
+def grade_task3(
+    agent_answer_str: str, golden_answer: Dict[str, Any]
+) -> tuple[float, str]:
     """
     Task 3 grader: GSTR-1 vs GSTR-2A reconciliation.
     Returns (score, feedback_string).
     """
     parsed, is_valid = safe_parse_json(agent_answer_str)
     if not is_valid or not parsed or "mismatches" not in parsed:
-        return 0.0, "Invalid JSON. Must include 'mismatches' list and 'total_itc_at_risk'."
+        return (
+            0.0,
+            "Invalid JSON. Must include 'mismatches' list and 'total_itc_at_risk'.",
+        )
 
     try:
-            mismatches = parsed.get("mismatches", [])
-            if not isinstance(mismatches, list):
-                mismatches = []
-            agent_mismatches = {m["invoice_no"]: m for m in mismatches if isinstance(m, dict) and "invoice_no" in m}
+        mismatches = parsed.get("mismatches", [])
+        if not isinstance(mismatches, list):
+            mismatches = []
+        agent_mismatches = {
+            m["invoice_no"]: m
+            for m in mismatches
+            if isinstance(m, dict) and "invoice_no" in m
+        }
     except Exception:
         agent_mismatches = {}
 
     try:
-        golden_mismatches = {m["invoice_no"]: m for m in golden_answer.get("mismatches", [])}
+        golden_mismatches = {
+            m["invoice_no"]: m for m in golden_answer.get("mismatches", [])
+        }
     except Exception:
         golden_mismatches = {}
 
@@ -134,8 +159,10 @@ def grade_task3(agent_answer_str: str, golden_answer: Dict[str, Any]) -> tuple[f
 
     # Score 2: Classification (30%) — did agent label mismatch_type correctly?
     type_correct = sum(
-        1 for inv in found
-        if agent_mismatches[inv].get("mismatch_type") == golden_mismatches[inv]["mismatch_type"]
+        1
+        for inv in found
+        if agent_mismatches[inv].get("mismatch_type")
+        == golden_mismatches[inv]["mismatch_type"]
     )
     type_score = type_correct / len(golden_mismatches)
 
@@ -161,7 +188,9 @@ def grade_task3(agent_answer_str: str, golden_answer: Dict[str, Any]) -> tuple[f
         feedback_parts.append(f"Missed invoices: {', '.join(list(missed)[:3])}")
     if itc_score < 0.9:
         feedback_parts.append(f"ITC at risk: got {agent_itc}, expected {expected_itc}")
-    feedback = "; ".join(feedback_parts) if feedback_parts else "Excellent reconciliation!"
+    feedback = (
+        "; ".join(feedback_parts) if feedback_parts else "Excellent reconciliation!"
+    )
     return final, feedback
 
 
