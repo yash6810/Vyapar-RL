@@ -140,39 +140,42 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
 
     try:
         for step in range(1, 11):
-            if isinstance(obs, dict):
-                full_obs = obs
-            else:
-                full_obs = {
-                    "task_id": getattr(obs, "task_id", ""),
-                    "task_name": getattr(obs, "task_name", ""),
-                    "task_data": getattr(obs, "task_data", {}),
-                    "instructions": getattr(obs, "instructions", ""),
-                    "feedback": getattr(obs, "feedback", ""),
+            try:
+                if isinstance(obs, dict):
+                    full_obs = obs
+                else:
+                    full_obs = {
+                        "task_id": getattr(obs, "task_id", ""),
+                        "task_name": getattr(obs, "task_name", ""),
+                        "task_data": getattr(obs, "task_data", {}),
+                        "instructions": getattr(obs, "instructions", ""),
+                        "feedback": getattr(obs, "feedback", ""),
+                    }
+
+                prompt = build_prompt(full_obs)
+                messages.append({"role": "user", "content": prompt})
+
+                try:
+                    answer = call_llm(messages)
+                    messages.append({"role": "assistant", "content": answer})
+                except Exception as e:
+                    print(f"API ERROR: {e}", flush=True)
+                    answer = "{}"
+                    messages.append({"role": "assistant", "content": answer})
+
+                action = {
+                    "task_id": full_obs.get("task_id", f"task{task_index + 1}"),
+                    "action_type": "submit_answer",
+                    "answer": answer,
                 }
 
-            prompt = build_prompt(full_obs)
-            messages.append({"role": "user", "content": prompt})
-
-            try:
-                answer = call_llm(messages)
-                messages.append({"role": "assistant", "content": answer})
-            except Exception as e:
-                print(f"API ERROR: {e}", flush=True)
-                answer = "{}"
-                messages.append({"role": "assistant", "content": answer})
-
-            action = {
-                "task_id": full_obs.get("task_id", f"task{task_index + 1}"),
-                "action_type": "submit_answer",
-                "answer": answer,
-            }
-
-            try:
                 result = env_client.step(action)
                 obs = result.observation if hasattr(result, "observation") else result
             except Exception as e:
-                print(f"STEP ERROR: {e}", flush=True)
+                print(f"STEP ERROR at step {step}: {type(e).__name__}: {e}", flush=True)
+                import traceback
+
+                traceback.print_exc()
                 break
 
             if hasattr(result, "reward"):
@@ -252,7 +255,8 @@ def main():
         ("GSTR1-vs-GSTR2A-Reconciliation", 2),
     ]
 
-    max_retries = 20
+    max_retries = 25
+    retry_delay = 12
     for attempt in range(1, max_retries + 1):
         try:
             with GenericEnvClient(base_url=ENV_URL).sync() as env:
@@ -260,18 +264,31 @@ def main():
                     task_rewards = run_task(env, task_name, task_index)
                     all_rewards.extend(task_rewards)
             break
+        except (KeyboardInterrupt, SystemExit):
+            print("Exiting...", flush=True)
+            sys.exit(0)
         except Exception as e:
             import traceback
 
-            print(f"Connection attempt {attempt}/{max_retries} failed: {e}", flush=True)
+            print(
+                f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}",
+                flush=True,
+            )
             traceback.print_exc()
             if attempt < max_retries:
-                time.sleep(10)
+                print(f"Retrying in {retry_delay}s...", flush=True)
+                time.sleep(retry_delay)
             else:
                 print(
                     f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
                     flush=True,
                 )
+                overall_avg = 0.0
+                result = {
+                    "overall_avg": overall_avg,
+                    "all_rewards": [],
+                }
+                print("\nJSON_RESULT:", json.dumps(result))
                 sys.exit(0)
 
     overall_avg = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
