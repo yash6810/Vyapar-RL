@@ -123,8 +123,14 @@ INSTRUCTIONS:
 def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
 
-    result = env_client.reset(task_index=task_index)
-    obs = result.observation if hasattr(result, "observation") else result
+    try:
+        result = env_client.reset(task_index=task_index)
+        obs = result.observation if hasattr(result, "observation") else result
+    except Exception as e:
+        print(f"ERROR: Failed to reset environment: {e}", flush=True)
+        log_end(success=False, steps=0, score=0.0, rewards=[])
+        return []
+
     rewards: List[float] = []
     steps_taken = 0
     score = 0.0
@@ -162,8 +168,12 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
                 "answer": answer,
             }
 
-            result = env_client.step(action)
-            obs = result.observation if hasattr(result, "observation") else result
+            try:
+                result = env_client.step(action)
+                obs = result.observation if hasattr(result, "observation") else result
+            except Exception as e:
+                print(f"STEP ERROR: {e}", flush=True)
+                break
 
             if hasattr(result, "reward"):
                 reward = result.reward or 0.0
@@ -195,13 +205,16 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
         score = min(max(score, 0.0), 1.0)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
+    except Exception as e:
+        print(f"TASK ERROR: {e}", flush=True)
+
     finally:
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
     return rewards
 
 
-def wait_for_env(base_url: str, timeout: int = 120, interval: int = 3) -> bool:
+def wait_for_env(base_url: str, timeout: int = 180, interval: int = 5) -> bool:
     health_url = base_url.rstrip("/")
     deadline = time.time() + timeout
     print(f"Waiting for environment at {health_url} ...", flush=True)
@@ -239,7 +252,7 @@ def main():
         ("GSTR1-vs-GSTR2A-Reconciliation", 2),
     ]
 
-    max_retries = 15
+    max_retries = 20
     for attempt in range(1, max_retries + 1):
         try:
             with GenericEnvClient(base_url=ENV_URL).sync() as env:
@@ -248,9 +261,12 @@ def main():
                     all_rewards.extend(task_rewards)
             break
         except Exception as e:
+            import traceback
+
             print(f"Connection attempt {attempt}/{max_retries} failed: {e}", flush=True)
+            traceback.print_exc()
             if attempt < max_retries:
-                time.sleep(8)
+                time.sleep(10)
             else:
                 print(
                     f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
