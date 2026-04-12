@@ -104,7 +104,7 @@ def call_llm(messages: List[Dict[str, str]]) -> str:
                 temperature=0.1,
             )
             raw_content = response.choices[0].message.content.strip()
-            match = re.search(r"\{.*\}", raw_content, re.DOTALL)
+            match = re.search(r"\{.*?\}", raw_content, re.DOTALL)
             if match:
                 raw_content = match.group(0).strip()
             return raw_content

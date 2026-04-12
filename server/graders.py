@@ -34,7 +34,7 @@ def grade_task1(
     for k, expected_slab in golden_answer.items():
         try:
             agent_slab = parsed.get(str(k))
-            if agent_slab is not None and int(agent_slab) == expected_slab:
+            if agent_slab is not None and not isinstance(agent_slab, bool) and int(agent_slab) == expected_slab:
                 correct += 1
             else:
                 wrong_ids.append(str(k))

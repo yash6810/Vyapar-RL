@@ -55,8 +55,9 @@ class GSTEnvironment(Environment):
         self._current_golden = None
         self._last_feedback = ""
         self._task_datasets = self._load_all_data()
+        self._prng = random.Random()
         # Pick an initial episode so _current_golden is never None
-        episode = random.choice(self._task_datasets["task1"])
+        episode = self._prng.choice(self._task_datasets["task1"])
         self._current_episode_data = episode
         self._current_golden = episode.get("golden_answer", {})
         self._state = GSTState(episode_id=str(uuid.uuid4()), step_count=0)
@@ -78,13 +79,15 @@ class GSTEnvironment(Environment):
     def _pick_episode(self) -> dict:
         task_id = self._get_task_data_key()
         episodes = self._task_datasets[task_id]
-        return random.choice(episodes)
+        return self._prng.choice(episodes)
 
     def reset(
         self, seed=None, episode_id=None, task_index=None, **kwargs
     ) -> GSTObservation:
         if seed is not None:
-            random.seed(seed)
+            self._prng = random.Random(seed)
+        else:
+            self._prng = random.Random()
 
         # Allow caller to specify which task to start with (0, 1, or 2)
         if task_index is not None and 0 <= task_index <= 2:
