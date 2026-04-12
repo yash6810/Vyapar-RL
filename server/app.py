@@ -12,6 +12,10 @@ from server.environment import GSTEnvironment
 
 app = create_fastapi_app(GSTEnvironment, GSTAction, GSTObservation)
 
+@app.get("/health")
+def health_status():
+    return {"status": "ok"}
+
 def main():
     uvicorn.run(app, host="0.0.0.0", port=7860)
 
