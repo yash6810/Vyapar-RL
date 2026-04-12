@@ -10,13 +10,12 @@ STDOUT FORMAT (mandatory):
   [END]   success=<true|false> steps=<n> score=<float> rewards=<r1,r2,...,rn>
 """
 
+import asyncio
 import json
 import os
 import sys
 import re
 import time
-import urllib.request
-import urllib.error
 from typing import List, Optional, Dict
 
 from openai import OpenAI
@@ -120,11 +119,11 @@ INSTRUCTIONS:
     return prompt
 
 
-def run_task(env_client, task_name: str, task_index: int) -> List[float]:
+async def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        result = env_client.reset(task_index=task_index)
+        result = await env_client.reset(task_index=task_index)
         obs = result.observation if hasattr(result, "observation") else result
     except Exception as e:
         print(f"ERROR: Failed to reset environment: {e}", flush=True)
@@ -169,13 +168,10 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
                     "answer": answer,
                 }
 
-                result = env_client.step(action)
+                result = await env_client.step(action)
                 obs = result.observation if hasattr(result, "observation") else result
             except Exception as e:
                 print(f"STEP ERROR at step {step}: {type(e).__name__}: {e}", flush=True)
-                import traceback
-
-                traceback.print_exc()
                 break
 
             if hasattr(result, "reward"):
@@ -217,35 +213,8 @@ def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     return rewards
 
 
-def wait_for_env(base_url: str, timeout: int = 180, interval: int = 5) -> bool:
-    health_url = base_url.rstrip("/")
-    deadline = time.time() + timeout
-    print(f"Waiting for environment at {health_url} ...", flush=True)
-    while time.time() < deadline:
-        try:
-            req = urllib.request.Request(health_url, method="GET")
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                print(f"Environment ready! (Status: {resp.status})", flush=True)
-                return True
-        except urllib.error.HTTPError as e:
-            print(f"Environment ready! (Status: {e.code})", flush=True)
-            return True
-        except urllib.error.URLError:
-            pass
-        except Exception:
-            pass
-        time.sleep(interval)
-    print(
-        f"WARNING: Environment did not respond within {timeout}s, attempting connection anyway.",
-        flush=True,
-    )
-    return True
-
-
-def main():
+async def main():
     from openenv import GenericEnvClient
-
-    wait_for_env(ENV_URL)
 
     all_rewards = []
 
@@ -255,87 +224,34 @@ def main():
         ("GSTR1-vs-GSTR2A-Reconciliation", 2),
     ]
 
-    max_retries = 30
-    retry_delay = 15
+    max_retries = 15
+    retry_delay = 5
     for attempt in range(1, max_retries + 1):
         try:
-            # Use longer timeouts for HF Spaces
-            with GenericEnvClient(
-                base_url=ENV_URL, connect_timeout_s=60.0, message_timeout_s=120.0
-            ).sync() as env:
+            print(f"Attempting to connect to environment (Attempt {attempt}/{max_retries})...", flush=True)
+            async with GenericEnvClient(
+                base_url=ENV_URL, connect_timeout_s=30.0, message_timeout_s=60.0
+            ) as env:
+                print("Environment ready! Connection established.", flush=True)
                 for task_name, task_index in task_configs:
-                    task_rewards = run_task(env, task_name, task_index)
+                    task_rewards = await run_task(env, task_name, task_index)
                     all_rewards.extend(task_rewards)
             break
-        except Exception as e:
-            import traceback
-
-            print(
-                f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}",
-                flush=True,
-            )
-            traceback.print_exc()
+        except BaseException as e:
+            # We explicitly catch BaseException to prevent ANY unhandled traceback
+            print(f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}", flush=True)
             if attempt < max_retries:
-                print(f"Retrying in {retry_delay}s...", flush=True)
-                time.sleep(retry_delay)
+                await asyncio.sleep(retry_delay)
             else:
-                print(
-                    f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
-                    flush=True,
-                )
-                overall_avg = 0.0
+                print(f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.", flush=True)
+                overall_avg = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
                 result = {
                     "overall_avg": overall_avg,
                     "all_rewards": [],
                 }
-                print("\nJSON_RESULT:", json.dumps(result))
-                sys.exit(0)
-        except Exception as e:
-            import traceback
-
-            print(
-                f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}",
-                flush=True,
-            )
-            traceback.print_exc()
-            if attempt < max_retries:
-                print(f"Retrying in {retry_delay}s...", flush=True)
-                time.sleep(retry_delay)
-            else:
-                print(
-                    f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
-                    flush=True,
-                )
-                overall_avg = 0.0
-                result = {
-                    "overall_avg": overall_avg,
-                    "all_rewards": [],
-                }
-                print("\nJSON_RESULT:", json.dumps(result))
-                sys.exit(0)
-        except Exception as e:
-            import traceback
-
-            print(
-                f"Connection attempt {attempt}/{max_retries} failed: {type(e).__name__}: {e}",
-                flush=True,
-            )
-            traceback.print_exc()
-            if attempt < max_retries:
-                print(f"Retrying in {retry_delay}s...", flush=True)
-                time.sleep(retry_delay)
-            else:
-                print(
-                    f"ERROR: All {max_retries} connection attempts failed. Exiting gracefully.",
-                    flush=True,
-                )
-                overall_avg = 0.0
-                result = {
-                    "overall_avg": overall_avg,
-                    "all_rewards": [],
-                }
-                print("\nJSON_RESULT:", json.dumps(result))
-                sys.exit(0)
+                print("\nJSON_RESULT:", json.dumps(result), flush=True)
+                import os
+                os._exit(0)
 
     overall_avg = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
     result = {
@@ -346,4 +262,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
