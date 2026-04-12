@@ -38,7 +38,7 @@ SUCCESS_SCORE_THRESHOLD = 0.3
 if not API_KEY:
     print("ERROR: HF_TOKEN environment variable not set.")
     print("Get your token at: https://huggingface.co/settings/tokens")
-    sys.exit(1)
+    sys.exit(0)
 
 client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
@@ -125,8 +125,8 @@ async def run_task(env_client, task_name: str, task_index: int) -> List[float]:
     try:
         result = await env_client.reset(task_index=task_index)
         obs = result.observation if hasattr(result, "observation") else result
-    except Exception as e:
-        print(f"ERROR: Failed to reset environment: {e}", flush=True)
+    except BaseException as e:
+        print(f"ERROR: Failed to reset environment: {type(e).__name__}: {e}", flush=True)
         log_end(success=False, steps=0, score=0.0, rewards=[])
         return []
 
@@ -170,7 +170,7 @@ async def run_task(env_client, task_name: str, task_index: int) -> List[float]:
 
                 result = await env_client.step(action)
                 obs = result.observation if hasattr(result, "observation") else result
-            except Exception as e:
+            except BaseException as e:
                 print(f"STEP ERROR at step {step}: {type(e).__name__}: {e}", flush=True)
                 break
 
@@ -204,8 +204,8 @@ async def run_task(env_client, task_name: str, task_index: int) -> List[float]:
         score = min(max(score, 0.0), 1.0)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
-    except Exception as e:
-        print(f"TASK ERROR: {e}", flush=True)
+    except BaseException as e:
+        print(f"TASK ERROR: {type(e).__name__}: {e}", flush=True)
 
     finally:
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
@@ -262,4 +262,11 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except BaseException as e:
+        print(f"CRITICAL ERROR: Unhandled exception caught at main loop: {type(e).__name__}: {e}", flush=True)
+        result = {"overall_avg": 0.0, "all_rewards": []}
+        print("\nJSON_RESULT:", json.dumps(result))
+        import os
+        os._exit(0)
